@@ -1,0 +1,33 @@
+# FastAPI и сервер
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# База данных
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Безопасность
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+
+# Валидация
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Экспорт
+openpyxl==3.1.2
+reportlab==4.0.8
+
+# QR-коды (ТЗ 2.2.3)
+qrcode[pil]==7.4.2
+Pillow==10.4.0
+
+# Утилиты
+python-dotenv==1.0.0
+httpx==0.26.0
+
+# Production
+gunicorn==21.2.0

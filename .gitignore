@@ -1,0 +1,32 @@
+# ── Секретные файлы ────────────────────────────────────────────
+.env
+backend/.env
+frontend/.env
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+backend/venv/
+backend/.venv/
+
+# ── Node.js ───────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+
+# ── Загруженные файлы и генерируемые данные ───────────────────
+backend/uploads/
+backend/exports/
+backend/logs/
+
+# ── OS файлы ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user
