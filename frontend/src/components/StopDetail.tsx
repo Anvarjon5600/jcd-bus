@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import { useStore } from '../store/useStore';
 import {
   STATUS_LABELS, CONDITION_LABELS, STATUS_COLORS, CONDITION_COLORS,
@@ -18,6 +18,22 @@ import {
 } from './CustomSelect';
 import { uploadStopPhoto, uploadMultipleStopPhotos, getStop, updateStop as apiUpdateStop } from '../api/stops';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+
+// Вынесен за пределы компонента чтобы не пересоздавался при каждом render
+const InputField = memo(({ label, value, onChange, placeholder = '', type = 'text', darkMode }: {
+  label: string; value: string | number; onChange: (v: string) => void;
+  placeholder?: string; type?: string; darkMode?: boolean;
+}) => (
+  <div>
+    <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', darkMode ? 'text-gray-400' : 'text-gray-500')}>{label}</label>
+    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      className={cn(
+        'w-full border-2 rounded-xl px-3 py-2.5 text-sm outline-none transition-all',
+        darkMode ? 'bg-gray-700/60 border-gray-600/60 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+          : 'bg-white border-gray-200 text-gray-900 hover:border-gray-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
+      )} />
+  </div>
+));
 
 const TRANSLATE_DICT: Record<string, string> = {
   'active': 'Активна', 'repair': 'В ремонте', 'dismantled': 'Демонтирована',
@@ -120,19 +136,7 @@ export function StopDetail() {
     </span>
   );
 
-  const InputField = ({ label, value, onChange, placeholder = '', type = 'text' }: {
-    label: string; value: string | number; onChange: (v: string) => void; placeholder?: string; type?: string;
-  }) => (
-    <div>
-      <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className={cn(
-          'w-full border-2 rounded-xl px-3 py-2.5 text-sm outline-none transition-all',
-          dm ? 'bg-gray-700/60 border-gray-600/60 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
-            : 'bg-white border-gray-200 text-gray-900 hover:border-gray-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
-        )} />
-    </div>
-  );
+  // InputField определён вне компонента (см. выше) — передаём darkMode пропом
 
   const DisplayField = ({ label, value, icon: Icon }: { label: string; value: string | number | undefined | null; icon?: React.ElementType }) => (
     <div className={cn(fieldBg, 'min-w-0')}>
@@ -317,13 +321,13 @@ export function StopDetail() {
                 </div>
                 {editing ? (
                   <div className="space-y-3">
-                    <InputField label="Адрес" value={editData?.address || ''} onChange={v => set({ address: v })} />
-                    <InputField label="Ориентир" value={editData?.landmark || ''} onChange={v => set({ landmark: v })} />
+                    <InputField darkMode={dm} label="Адрес" value={editData?.address || ''} onChange={v => set({ address: v })} />
+                    <InputField darkMode={dm} label="Ориентир" value={editData?.landmark || ''} onChange={v => set({ landmark: v })} />
                     <div>
                       <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Район</label>
                       <CustomSelect value={editData?.district || ''} onChange={v => set({ district: v })} options={DISTRICT_OPTIONS} />
                     </div>
-                    <InputField label="Маршруты" value={editData?.routes || ''} onChange={v => set({ routes: v })} placeholder="11, 45, 67" />
+                    <InputField darkMode={dm} label="Маршруты" value={editData?.routes || ''} onChange={v => set({ routes: v })} placeholder="11, 45, 67" />
                   </div>
                 ) : (<>
                   <div className={cn('font-bold text-lg', dm ? 'text-gray-100' : 'text-gray-900')}>{data.address}</div>
@@ -408,8 +412,8 @@ export function StopDetail() {
                       <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Количество стоек</label>
                       <CustomSelect value={String(editData?.legs_count || 2)} onChange={v => set({ legs_count: Number(v) as 2 | 4 | 6 })} options={LEG_COUNT_OPTIONS} />
                     </div>
-                    <InputField label="Год выпуска" value={editData?.year_built || ''} onChange={v => set({ year_built: Number(v) || undefined })} />
-                    <InputField label="Цвет покраски" value={editData?.paint_color || ''} onChange={v => set({ paint_color: v })} />
+                    <InputField darkMode={dm} label="Год выпуска" value={editData?.year_built || ''} onChange={v => set({ year_built: Number(v) || undefined })} />
+                    <InputField darkMode={dm} label="Цвет покраски" value={editData?.paint_color || ''} onChange={v => set({ paint_color: v })} />
                     <div>
                       <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Состояние сидений</label>
                       <CustomSelect value={editData?.seats_condition || 'satisfactory'} onChange={v => set({ seats_condition: v as ConditionLevel })} options={CONDITION_OPTIONS} />
@@ -439,12 +443,12 @@ export function StopDetail() {
                       <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Вид крыши</label>
                       <CustomSelect value={editData?.roof_type || 'flat'} onChange={v => set({ roof_type: v })} options={ROOF_TYPE_OPTIONS} />
                     </div>
-                    <InputField label="Цвет крыши" value={editData?.roof_color || ''} onChange={v => set({ roof_color: v })} />
+                    <InputField darkMode={dm} label="Цвет крыши" value={editData?.roof_color || ''} onChange={v => set({ roof_color: v })} />
                     <div>
                       <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Состояние крыши</label>
                       <CustomSelect value={editData?.roof_condition || 'satisfactory'} onChange={v => set({ roof_condition: v as ConditionLevel })} options={CONDITION_OPTIONS} />
                     </div>
-                    <InputField label="Слиф на крыше" value={editData?.has_roof_slif ? 'Установлен' : 'Не установлен'} onChange={v => set({ has_roof_slif: v === 'Установлен' })} />
+                    <InputField darkMode={dm} label="Слиф на крыше" value={editData?.has_roof_slif ? 'Установлен' : 'Не установлен'} onChange={v => set({ has_roof_slif: v === 'Установлен' })} />
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -470,7 +474,7 @@ export function StopDetail() {
                       <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Бронестёкла</label>
                       <CustomSelect value={editData?.glass_condition || 'satisfactory'} onChange={v => set({ glass_condition: v as ConditionLevel })} options={CONDITION_OPTIONS} />
                     </div>
-                    <InputField label="Кол-во замен" type="number" value={editData?.glass_replacement_count || 0} onChange={v => set({ glass_replacement_count: Number(v) })} />
+                    <InputField darkMode={dm} label="Кол-во замен" type="number" value={editData?.glass_replacement_count || 0} onChange={v => set({ glass_replacement_count: Number(v) })} />
                     <div>
                       <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Крепление стёкол</label>
                       <CustomSelect value={editData?.glass_mount_condition || 'satisfactory'} onChange={v => set({ glass_mount_condition: v as ConditionLevel })} options={CONDITION_OPTIONS} />
@@ -542,8 +546,8 @@ export function StopDetail() {
                 )}>📦 Дополнительные элементы</h4>
                 {editing ? (
                   <div className="space-y-3">
-                    <InputField label="Навесные элементы" value={editData?.hanging_elements || ''} onChange={v => set({ hanging_elements: v })} placeholder="Рекламные щиты..." />
-                    <InputField label="Крепежи" value={editData?.fasteners || ''} onChange={v => set({ fasteners: v })} />
+                    <InputField darkMode={dm} label="Навесные элементы" value={editData?.hanging_elements || ''} onChange={v => set({ hanging_elements: v })} placeholder="Рекламные щиты..." />
+                    <InputField darkMode={dm} label="Крепежи" value={editData?.fasteners || ''} onChange={v => set({ fasteners: v })} />
                   </div>
                 ) : (
                   <div className="space-y-3">
