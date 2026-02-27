@@ -2,11 +2,23 @@
 """
 Аудит: логирование всех действий пользователей
 """
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
+from enum import Enum
 from sqlalchemy.orm import Session
 
 from models import AuditLog, User
+
+
+def _serialize(value):
+    """Конвертирует неcериализуемые типы в строки для JSON"""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Enum):
+        return value.value
+    return value
 
 
 class AuditLogger:
@@ -112,8 +124,8 @@ class AuditLogger:
         for key in new_data:
             if key in old_data and old_data[key] != new_data[key]:
                 changes[key] = {
-                    "old": old_data[key],
-                    "new": new_data[key]
+                    "old": _serialize(old_data[key]),
+                    "new": _serialize(new_data[key])
                 }
         
         if changes:
