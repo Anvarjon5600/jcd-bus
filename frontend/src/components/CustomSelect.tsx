@@ -44,9 +44,9 @@ export const LEG_COUNT_OPTIONS: SelectOption[] = [
 ];
 
 export const ROOF_TYPE_OPTIONS: SelectOption[] = [
-  { value: 'Арочная', label: 'Арочная' },
-  { value: 'Плоская', label: 'Плоская' },
-  { value: 'Скатная', label: 'Скатная' },
+  { value: 'flat', label: 'Плоская' },
+  { value: 'arched', label: 'Арочная' },
+  { value: 'peaked', label: 'Скатная' },
 ];
 
 export function CustomSelect({ value, onChange, options, placeholder = 'Выберите...' }: CustomSelectProps) {

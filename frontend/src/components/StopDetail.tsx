@@ -238,7 +238,7 @@ export function StopDetail() {
             <div className={cn('lg:col-span-2', cardCls)}>
               <div className={cn('relative group', dm ? 'bg-gray-700' : 'bg-gradient-to-br from-gray-100 to-gray-200')} style={{ aspectRatio: '4/3' }}>
                 {photos[selectedIndex] ? (
-                  <img src={`http://localhost:8000/${photos[selectedIndex].file_path.replace(/\\/g, '/')}`} alt={`Фото ${stop.id}`}
+                  <img src={`/${photos[selectedIndex].file_path.replace(/\\/g, '/')}`} alt={`Фото ${stop.id}`}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%3E%3Crect%20fill%3D%22%23f3f4f6%22%20width%3D%22400%22%20height%3D%22300%22%2F%3E%3Ctext%20fill%3D%22%239ca3af%22%20font-family%3D%22system-ui%22%20font-size%3D%2216%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3E%D0%A4%D0%BE%D1%82%D0%BE%3C%2Ftext%3E%3C%2Fsvg%3E'; }}
                   />
@@ -266,7 +266,7 @@ export function StopDetail() {
                     className={cn('w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all',
                       idx === selectedIndex ? 'border-blue-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'
                     )}>
-                    <img src={`http://localhost:8000/${photo.file_path.replace(/\\/g, '/')}`} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <img src={`/${photo.file_path.replace(/\\/g, '/')}`} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </button>
                 ))}
                 {canEdit && (

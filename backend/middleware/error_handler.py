@@ -193,7 +193,7 @@ async def http_exception_handler(
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Обработчик ошибок валидации Pydantic"""
     request_id = request.headers.get("X-Request-ID", "unknown")
-    
+
     errors = []
     for error in exc.errors():
         field = ".".join(str(loc) for loc in error["loc"])
@@ -202,6 +202,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": error["msg"],
             "type": error["type"],
         })
+
+    logger.warning(f"422 Validation error on {request.method} {request.url.path}: {errors}")
     
     return create_error_response(
         status_code=422,
