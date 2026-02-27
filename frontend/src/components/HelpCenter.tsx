@@ -78,10 +78,10 @@ const FAQ: FaqItem[] = [
 ];
 
 const quickSteps = [
-  { icon: MapPin, label: 'Найти остановку', desc: 'Карта или Список' },
-  { icon: Edit3, label: 'Редактировать', desc: 'Кнопка «Редактировать»' },
-  { icon: Camera, label: 'Добавить фото', desc: 'Кнопка «+» в галерее' },
-  { icon: CheckCircle2, label: 'Сохранить', desc: 'Кнопка «Сохранить»' },
+  { icon: MapPin, label: 'Найти остановку', desc: 'Карта или Список', color: 'from-blue-500 to-indigo-600', bg: 'from-blue-50 to-indigo-50', border: 'border-blue-100', darkBg: 'bg-blue-500/10', darkBorder: 'border-blue-500/20', darkIcon: 'text-blue-300' },
+  { icon: Edit3, label: 'Редактировать', desc: 'Кнопка «Редактировать»', color: 'from-orange-500 to-amber-500', bg: 'from-orange-50 to-amber-50', border: 'border-orange-100', darkBg: 'bg-orange-500/10', darkBorder: 'border-orange-500/20', darkIcon: 'text-orange-300' },
+  { icon: Camera, label: 'Добавить фото', desc: 'Кнопка «+» в галерее', color: 'from-purple-500 to-pink-600', bg: 'from-purple-50 to-pink-50', border: 'border-purple-100', darkBg: 'bg-purple-500/10', darkBorder: 'border-purple-500/20', darkIcon: 'text-purple-300' },
+  { icon: CheckCircle2, label: 'Сохранить', desc: 'Кнопка «Сохранить»', color: 'from-green-500 to-emerald-600', bg: 'from-green-50 to-emerald-50', border: 'border-green-100', darkBg: 'bg-green-500/10', darkBorder: 'border-green-500/20', darkIcon: 'text-green-300' },
 ];
 
 export function HelpCenter() {
@@ -116,12 +116,15 @@ export function HelpCenter() {
             {quickSteps.map((s, i) => {
               const Icon = s.icon;
               return (
-                <div key={i} className={cn('rounded-xl p-3 border text-center', dm ? 'bg-gray-800/60 border-gray-700/40' : 'bg-gray-50 border-gray-100')}>
-                  <div className={cn('w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center', dm ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-600')}>
-                    <Icon className="w-4 h-4" />
+                <div key={i} className={cn(
+                  'rounded-xl p-4 border text-center',
+                  dm ? `${s.darkBg} ${s.darkBorder}` : `bg-gradient-to-br ${s.bg} ${s.border}`
+                )}>
+                  <div className={cn('w-10 h-10 rounded-xl mx-auto mb-2.5 flex items-center justify-center bg-gradient-to-br shadow-sm', s.color)}>
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
                   <div className={cn('text-xs font-bold', dm ? 'text-gray-200' : 'text-gray-800')}>{s.label}</div>
-                  <div className={cn('text-xs mt-0.5', dm ? 'text-gray-500' : 'text-gray-500')}>{s.desc}</div>
+                  <div className={cn('text-xs mt-1', dm ? 'text-gray-500' : 'text-gray-500')}>{s.desc}</div>
                 </div>
               );
             })}

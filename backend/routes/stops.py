@@ -315,8 +315,8 @@ async def update_stop(
                     user_id=current_user.id,
                     user_name=current_user.name,
                     field_name=field,
-                    old_value=str(old_value) if old_value is not None else None,
-                    new_value=str(value) if value is not None else None,
+                    old_value=(old_value.value if hasattr(old_value, 'value') else str(old_value)) if old_value is not None else None,
+                    new_value=(value.value if hasattr(value, 'value') else str(value)) if value is not None else None,
                     ip_address=get_client_ip(request)
                 )
                 db.add(change_log)

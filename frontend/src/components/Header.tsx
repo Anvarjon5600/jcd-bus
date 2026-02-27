@@ -212,24 +212,21 @@ export function Header({ onAddStop }: HeaderProps) {
                 </button>
 
                 <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    alert('📞 Служба поддержки JCDecaux Uzbekistan\n\nEmail: support@jcdecaux.uz\nТел: +998 71 123-45-67\n\nРабочие часы: Пн-Пт 9:00–18:00');
-                  }}
+                  onClick={() => { setDropdownOpen(false); setPage('help'); }}
                   className={cn(
                     'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors group',
-                    dm ? 'text-gray-200 hover:bg-gray-700/50' : 'text-gray-700 hover:bg-gray-50'
+                    dm ? 'text-gray-200 hover:bg-sky-500/10' : 'text-gray-700 hover:bg-sky-50 hover:text-sky-700'
                   )}
                 >
                   <div className={cn(
                     'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
-                    dm ? 'bg-gray-700 group-hover:bg-gray-600' : 'bg-gray-100 group-hover:bg-gray-200'
+                    dm ? 'bg-sky-500/20 group-hover:bg-sky-500/30' : 'bg-sky-100 group-hover:bg-sky-200'
                   )}>
-                    <HelpCircle className={cn('w-4 h-4', dm ? 'text-gray-400' : 'text-gray-600')} />
+                    <HelpCircle className={cn('w-4 h-4', dm ? 'text-sky-400' : 'text-sky-600')} />
                   </div>
                   <div className="text-left">
                     <div className="font-semibold">Помощь</div>
-                    <div className={cn('text-xs', dm ? 'text-gray-500' : 'text-gray-400')}>Документация и поддержка</div>
+                    <div className={cn('text-xs', dm ? 'text-gray-500' : 'text-gray-400')}>Справочник по системе</div>
                   </div>
                 </button>
               </div>

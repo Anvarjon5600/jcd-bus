@@ -185,6 +185,7 @@ export function ListView() {
               <div
                 key={stop.id}
                 onClick={() => selectStop(String(stop.id))}
+                style={{ height: '120px' }}
                 className={cn(
                   'rounded-2xl border transition-all cursor-pointer overflow-hidden flex group',
                   dm
@@ -193,9 +194,9 @@ export function ListView() {
                 )}
               >
                 <div className={cn(
-                  'w-32 md:w-44 flex-shrink-0 relative overflow-hidden',
+                  'w-28 md:w-36 flex-shrink-0 relative overflow-hidden',
                   dm ? 'bg-gray-700/60' : 'bg-gradient-to-br from-gray-100 to-gray-200'
-                )}>
+                )} style={{ height: '120px' }}>
                   {photoUrl ? (
                     <img
                       src={photoUrl}
