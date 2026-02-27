@@ -131,6 +131,7 @@ export function AdminPanel() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'viewer' as UserRole, password: '' });
   const [editForm, setEditForm] = useState<{ name: string; email: string; password: string; role: UserRole } | null>(null);
+  const [deleteConfirmUserId, setDeleteConfirmUserId] = useState<string | null>(null);
   const [directoriesLoading, setDirectoriesLoading] = useState(false);
   const [dirError, setDirError] = useState<string | null>(null);
   const [districts, setDistricts] = useState<DistrictDto[]>([]);
@@ -205,7 +206,11 @@ export function AdminPanel() {
 
   const handleDelete = (userId: string) => {
     if (userId === currentUser?.id) { alert('Нельзя удалить себя'); return; }
-    if (confirm('Удалить пользователя?')) deleteUser(userId);
+    setDeleteConfirmUserId(userId);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmUserId) { deleteUser(deleteConfirmUserId); setDeleteConfirmUserId(null); }
   };
 
   // ── theme shortcuts ──
@@ -225,8 +230,43 @@ export function AdminPanel() {
     dm ? 'border-gray-600/60 text-gray-300 hover:bg-gray-700/50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
   );
 
+  const userToDelete = users?.find(u => u.id === deleteConfirmUserId);
+
   return (
     <div className={cn('h-full flex flex-col overflow-hidden transition-colors duration-300', page)}>
+
+      {/* ── Delete User Modal ── */}
+      {deleteConfirmUserId && userToDelete && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) setDeleteConfirmUserId(null); }}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className={cn('relative w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden', dm ? 'bg-gray-900 border border-gray-700/60' : 'bg-white border border-gray-100')}>
+            <div className="h-1 bg-gradient-to-r from-red-500 to-rose-600" />
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className={cn('font-bold text-base', dm ? 'text-white' : 'text-gray-900')}>Удалить пользователя?</h3>
+                  <p className={cn('text-sm', dm ? 'text-gray-400' : 'text-gray-500')}>Это действие необратимо</p>
+                </div>
+              </div>
+              <div className={cn('rounded-xl p-3 mb-5 border', dm ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200')}>
+                <div className={cn('font-semibold text-sm', dm ? 'text-gray-200' : 'text-gray-800')}>{userToDelete.name}</div>
+                <div className={cn('text-xs mt-0.5', dm ? 'text-gray-500' : 'text-gray-500')}>{userToDelete.email}</div>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setDeleteConfirmUserId(null)} className={cn('flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all', dm ? 'border-gray-600 text-gray-300 hover:bg-gray-700/60' : 'border-gray-200 text-gray-700 hover:bg-gray-100')}>
+                  Отмена
+                </button>
+                <button onClick={confirmDelete} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-lg shadow-red-500/25 transition-all flex items-center justify-center gap-2">
+                  <Trash2 className="w-4 h-4" /> Удалить
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Tabs ── */}
       <div className={cn('border-b flex-shrink-0 overflow-x-auto', tabBar)}>

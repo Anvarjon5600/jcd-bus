@@ -180,7 +180,7 @@ export function ListView() {
         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4 pb-[60px]">
           {stops.map(stop => {
             const mainPhoto = (stop.photos || []).find(p => p.is_main) || (stop.photos || [])[0];
-            const photoUrl = mainPhoto ? `http://localhost:8000/${mainPhoto.file_path.replace(/\\/g, '/')}` : null;
+            const photoUrl = mainPhoto ? `/${mainPhoto.file_path.replace(/\\/g, '/')}` : null;
             return (
               <div
                 key={stop.id}

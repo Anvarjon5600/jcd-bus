@@ -182,7 +182,7 @@ export function LoginPage() {
           {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-400">
-              © 2024 JCDecaux Uzbekistan. Все права защищены.
+              © 2026 JCDecaux Uzbekistan. Все права защищены.
             </p>
           </div>
         </div>

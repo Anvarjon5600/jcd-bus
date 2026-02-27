@@ -128,7 +128,7 @@ export function App() {
 
               {/* Правая часть */}
               <div className="text-xs text-slate-500 hidden lg:block">
-                © 2024 JCDecaux Uzbekistan
+                © 2026 JCDecaux Uzbekistan
               </div>
             </footer>
           )}

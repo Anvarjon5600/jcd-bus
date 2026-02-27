@@ -35,6 +35,25 @@ const InputField = memo(({ label, value, onChange, placeholder = '', type = 'tex
   </div>
 ));
 
+const FIELD_LABELS: Record<string, string> = {
+  address: 'Адрес', landmark: 'Ориентир', district: 'Район', routes: 'Маршруты',
+  latitude: 'Широта', longitude: 'Долгота',
+  status: 'Статус', condition: 'Состояние', meets_standards: 'Соответствие нормативам',
+  stop_type: 'Тип остановки', legs_count: 'Количество стоек',
+  year_built: 'Год выпуска', paint_color: 'Цвет покраски',
+  seats_condition: 'Состояние сидений',
+  roof_type: 'Вид крыши', roof_color: 'Цвет крыши',
+  roof_condition: 'Состояние крыши', has_roof_slif: 'Слиф на крыше',
+  glass_condition: 'Состояние стёкол',
+  glass_mount_condition: 'Крепление стёкол',
+  glass_replacement_count: 'Кол-во замен стёкол',
+  has_electricity: 'Электропитание', has_bin: 'Наличие урны',
+  bin_condition: 'Состояние урны',
+  hanging_elements: 'Навесные элементы', fasteners: 'Крепежи',
+  last_inspection_date: 'Дата осмотра',
+  inspector_name: 'Инспектор', next_inspection_date: 'Следующая проверка',
+};
+
 const TRANSLATE_DICT: Record<string, string> = {
   'active': 'Активна', 'repair': 'В ремонте', 'dismantled': 'Демонтирована',
   'inactive': 'Недоступна', 'other': 'Иное',
@@ -562,21 +581,43 @@ export function StopDetail() {
                 <h4 className={cn('font-bold flex items-center gap-2 pb-3 border-b-2',
                   dm ? 'border-indigo-500/40 text-indigo-400' : 'border-indigo-200 text-indigo-700'
                 )}><Clock className="w-4 h-4" /> Инспекция</h4>
-                <div className="space-y-3">
-                  <div className={cn('rounded-xl p-4 border',
-                    dm ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-100'
-                  )}>
-                    <div className={cn('text-xs font-semibold uppercase tracking-wide mb-1', dm ? 'text-indigo-400' : 'text-indigo-400')}>📅 Последний осмотр</div>
-                    <div className={cn('font-bold text-base', dm ? 'text-gray-100' : 'text-gray-900')}>{data.last_inspection_date ? new Date(data.last_inspection_date).toLocaleDateString('ru-RU') : '—'}</div>
+                {editing ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Дата последнего осмотра</label>
+                      <input type="date" value={editData?.last_inspection_date ? editData.last_inspection_date.slice(0, 10) : ''}
+                        onChange={e => set({ last_inspection_date: e.target.value || undefined })}
+                        className={cn('w-full border-2 rounded-xl px-3 py-2.5 text-sm outline-none transition-all',
+                          dm ? 'bg-gray-700/60 border-gray-600/60 text-gray-100 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'
+                        )} />
+                    </div>
+                    <InputField darkMode={dm} label="Инспектор" value={editData?.inspector_name || ''} onChange={v => set({ inspector_name: v })} placeholder="ФИО инспектора" />
+                    <div>
+                      <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>Следующая проверка</label>
+                      <input type="date" value={editData?.next_inspection_date ? editData.next_inspection_date.slice(0, 10) : ''}
+                        onChange={e => set({ next_inspection_date: e.target.value || undefined })}
+                        className={cn('w-full border-2 rounded-xl px-3 py-2.5 text-sm outline-none transition-all',
+                          dm ? 'bg-gray-700/60 border-gray-600/60 text-gray-100 focus:border-blue-500' : 'bg-white border-gray-200 text-gray-900 focus:border-blue-500'
+                        )} />
+                    </div>
                   </div>
-                  <DisplayField label="Инспектор" value={data.inspector_name} icon={Wrench} />
-                  <div className={cn('rounded-xl p-4 border',
-                    dm ? 'bg-blue-500/10 border-blue-500/20' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100'
-                  )}>
-                    <div className={cn('text-xs font-semibold uppercase tracking-wide mb-1', dm ? 'text-blue-400' : 'text-blue-400')}>🔔 Следующая проверка</div>
-                    <div className={cn('font-bold text-base', dm ? 'text-blue-300' : 'text-blue-700')}>{data.next_inspection_date ? new Date(data.next_inspection_date).toLocaleDateString('ru-RU') : '—'}</div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className={cn('rounded-xl p-4 border',
+                      dm ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-100'
+                    )}>
+                      <div className={cn('text-xs font-semibold uppercase tracking-wide mb-1', dm ? 'text-indigo-400' : 'text-indigo-400')}>📅 Последний осмотр</div>
+                      <div className={cn('font-bold text-base', dm ? 'text-gray-100' : 'text-gray-900')}>{data.last_inspection_date ? new Date(data.last_inspection_date).toLocaleDateString('ru-RU') : '—'}</div>
+                    </div>
+                    <DisplayField label="Инспектор" value={data.inspector_name} icon={Wrench} />
+                    <div className={cn('rounded-xl p-4 border',
+                      dm ? 'bg-blue-500/10 border-blue-500/20' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100'
+                    )}>
+                      <div className={cn('text-xs font-semibold uppercase tracking-wide mb-1', dm ? 'text-blue-400' : 'text-blue-400')}>🔔 Следующая проверка</div>
+                      <div className={cn('font-bold text-base', dm ? 'text-blue-300' : 'text-blue-700')}>{data.next_inspection_date ? new Date(data.next_inspection_date).toLocaleDateString('ru-RU') : '—'}</div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -618,16 +659,16 @@ export function StopDetail() {
                             <span className={cn('text-xs px-2 py-0.5 rounded-full', dm ? 'text-gray-400 bg-gray-600/40' : 'text-gray-400 bg-gray-100')}>{new Date(entry.changed_at).toLocaleString('ru-RU')}</span>
                           </div>
                           <div className={cn('text-sm mt-1', dm ? 'text-gray-400' : 'text-gray-500')}>
-                            Изменено: <span className={cn('font-semibold', dm ? 'text-gray-300' : 'text-gray-700')}>{entry.field_name}</span>
+                            Изменено: <span className={cn('font-semibold', dm ? 'text-gray-300' : 'text-gray-700')}>{FIELD_LABELS[entry.field_name] || entry.field_name}</span>
                           </div>
                           <div className="flex items-center gap-2 mt-2 flex-wrap">
                             <span className={cn('px-2.5 py-1 rounded-lg text-sm font-medium line-through opacity-70',
                               dm ? 'bg-red-500/15 text-red-400' : 'bg-red-100 text-red-700'
-                            )}>{entry.old_value}</span>
+                            )}>{translateValue(entry.old_value)}</span>
                             <span className={cn('font-bold', dm ? 'text-gray-500' : 'text-gray-400')}>→</span>
                             <span className={cn('px-2.5 py-1 rounded-lg text-sm font-semibold',
                               dm ? 'bg-green-500/15 text-green-400' : 'bg-green-100 text-green-700'
-                            )}>{entry.new_value}</span>
+                            )}>{translateValue(entry.new_value)}</span>
                           </div>
                         </div>
                       </div>
