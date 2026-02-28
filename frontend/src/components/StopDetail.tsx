@@ -16,7 +16,7 @@ import {
   STATUS_OPTIONS, CONDITION_OPTIONS, STOP_TYPE_OPTIONS,
   LEG_COUNT_OPTIONS, ROOF_TYPE_OPTIONS, SelectOption
 } from './CustomSelect';
-import { uploadStopPhoto, uploadMultipleStopPhotos, getStop, updateStop as apiUpdateStop } from '../api/stops';
+import { uploadStopPhoto, uploadMultipleStopPhotos, getStop, updateStop as apiUpdateStop, updateCustomFieldValues } from '../api/stops';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 
 // Вынесен за пределы компонента чтобы не пересоздавался при каждом render
@@ -69,14 +69,16 @@ function translateValue(raw: string): string {
   return TRANSLATE_DICT[String(raw).trim()] ?? String(raw).trim();
 }
 
-const DISTRICT_OPTIONS: SelectOption[] = DISTRICTS.map(d => ({ value: d, label: d }));
-
 export function StopDetail() {
   const { stops, selectedStopId, setPage, currentUser, updateStop, loadStops, removeStop } = useStore();
   const dm = useStore(s => s.darkMode);
+  const storeDistricts = useStore(s => s.districts);
+  const customFields = useStore(s => s.customFields);
+  const DISTRICT_OPTIONS: SelectOption[] = (storeDistricts.length > 0 ? storeDistricts : DISTRICTS).map(d => ({ value: d, label: d }));
   const stop = stops.find(s => String(s.id) === String(selectedStopId) || s.stop_id === selectedStopId);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<BusStop | null>(stop ? { ...stop } : null);
+  const [cfValues, setCfValues] = useState<Record<number, string>>({});
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -93,7 +95,13 @@ export function StopDetail() {
   const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'inspector';
   const canDelete = currentUser?.role === 'admin';
 
-  const startEdit = () => { setEditData({ ...stop }); setEditing(true); };
+  const startEdit = () => {
+    setEditData({ ...stop });
+    const vals: Record<number, string> = {};
+    (stop.custom_field_values || []).forEach(v => { vals[v.field_id] = v.value || ''; });
+    setCfValues(vals);
+    setEditing(true);
+  };
   const cancelEdit = () => { setEditing(false); setEditData(null); };
 
   const saveEdit = async () => {
@@ -102,7 +110,14 @@ export function StopDetail() {
     setSaveError(null);
     try {
       const updated = await apiUpdateStop(stop.stop_id, editData);
-      updateStop(String(stop.id), updated);
+      // Save custom field values
+      const cfPayload = Object.entries(cfValues).map(([fid, val]) => ({ field_id: Number(fid), value: val || null }));
+      if (cfPayload.length > 0) {
+        await updateCustomFieldValues(stop.stop_id, cfPayload);
+      }
+      // Reload stop to get fresh custom_field_values
+      const refreshed = await getStop(stop.stop_id);
+      updateStop(String(stop.id), refreshed);
       setEditing(false);
       setEditData(null);
     } catch (err: unknown) {
@@ -621,6 +636,58 @@ export function StopDetail() {
               </div>
             </div>
           </div>
+
+          {/* Custom Fields */}
+          {customFields.length > 0 && (
+            <div className={cn(cardCls, 'mb-4 p-6')}>
+              <h4 className={cn('font-bold text-lg mb-4 flex items-center gap-2', dm ? 'text-gray-200' : 'text-gray-900')}>
+                <Sparkles className="w-5 h-5 text-purple-500" /> Дополнительные характеристики
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {customFields.map(cf => {
+                  if (editing && editData) {
+                    const val = cfValues[cf.id] ?? '';
+                    if (cf.field_type === 'boolean') {
+                      return (
+                        <div key={cf.id} className="flex items-center gap-3">
+                          <label className={cn('text-sm font-medium', dm ? 'text-gray-300' : 'text-gray-700')}>{cf.name}</label>
+                          <button type="button" onClick={() => setCfValues(prev => ({ ...prev, [cf.id]: val === 'true' ? 'false' : 'true' }))}
+                            className={cn('w-10 h-5 rounded-full transition-colors relative', val === 'true' ? 'bg-purple-500' : (dm ? 'bg-gray-600' : 'bg-gray-300'))}>
+                            <span className={cn('absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform', val === 'true' ? 'left-[22px]' : 'left-0.5')} />
+                          </button>
+                        </div>
+                      );
+                    }
+                    if (cf.field_type === 'select' && cf.options) {
+                      return (
+                        <div key={cf.id}>
+                          <label className={cn('block text-xs font-semibold uppercase tracking-wide mb-1.5', dm ? 'text-gray-400' : 'text-gray-500')}>{cf.name}</label>
+                          <CustomSelect value={val} onChange={v => setCfValues(prev => ({ ...prev, [cf.id]: v }))}
+                            options={cf.options.map(o => ({ value: o, label: o }))} />
+                        </div>
+                      );
+                    }
+                    return (
+                      <InputField key={cf.id} darkMode={dm} label={cf.name} value={val}
+                        type={cf.field_type === 'number' ? 'number' : 'text'}
+                        onChange={v => setCfValues(prev => ({ ...prev, [cf.id]: v }))} />
+                    );
+                  }
+                  // View mode
+                  const existing = (stop.custom_field_values || []).find(v => v.field_id === cf.id);
+                  const displayVal = existing?.value ?? '—';
+                  return (
+                    <div key={cf.id}>
+                      <div className={cn('text-xs font-semibold uppercase tracking-wide mb-1', dm ? 'text-gray-500' : 'text-gray-400')}>{cf.name}</div>
+                      <div className={cn('text-sm font-medium', dm ? 'text-gray-200' : 'text-gray-800')}>
+                        {cf.field_type === 'boolean' ? (displayVal === 'true' ? 'Да' : displayVal === 'false' ? 'Нет' : '—') : displayVal}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Change History */}
           <div className={cn(cardCls, 'mb-4')}>

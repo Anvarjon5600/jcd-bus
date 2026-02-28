@@ -8,6 +8,8 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 
 export function ListView() {
   const { getFilteredStops, selectStop, filters, setFilters, resetFilters, darkMode, currentUser, removeStop } = useStore();
+  const storeDistricts = useStore(s => s.districts);
+  const districtList = storeDistricts.length > 0 ? storeDistricts : DISTRICTS;
   const stops = getFilteredStops();
   const dm = darkMode;
   const canDelete = currentUser?.role === 'admin';
@@ -86,7 +88,7 @@ export function ListView() {
               onChange={v => setFilters({ district: v })}
               options={[
                 { value: '', label: 'Все районы' },
-                ...DISTRICTS.map(d => ({ value: d, label: d }))
+                ...districtList.map(d => ({ value: d, label: d }))
               ] as SelectOption[]}
               placeholder="Все районы"
             />
@@ -185,7 +187,6 @@ export function ListView() {
               <div
                 key={stop.id}
                 onClick={() => selectStop(String(stop.id))}
-                style={{ height: '120px' }}
                 className={cn(
                   'rounded-2xl border transition-all cursor-pointer overflow-hidden flex group',
                   dm
@@ -196,7 +197,7 @@ export function ListView() {
                 <div className={cn(
                   'w-28 md:w-36 flex-shrink-0 relative overflow-hidden',
                   dm ? 'bg-gray-700/60' : 'bg-gradient-to-br from-gray-100 to-gray-200'
-                )} style={{ height: '120px' }}>
+                )} style={{ minHeight: '120px' }}>
                   {photoUrl ? (
                     <img
                       src={photoUrl}

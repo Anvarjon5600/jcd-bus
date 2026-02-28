@@ -106,8 +106,8 @@ export function App() {
                 </div>
               </div>
 
-              {/* Центр — статистика */}
-              <div className="flex items-center gap-2 text-xs flex-wrap">
+              {/* Центр — статистика (скрыта на мобильных) */}
+              <div className="hidden md:flex items-center gap-2 text-xs flex-wrap">
                 <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/20 border border-green-500/30">
                   <Sparkles className="w-3 h-3 text-green-400" />
                   <span className="text-green-300 font-medium">{excellent} отлично</span>
@@ -124,6 +124,17 @@ export function App() {
                   <AlertTriangle className="w-3 h-3 text-red-400" />
                   <span className="text-red-300 font-medium">{critical} критич.</span>
                 </div>
+              </div>
+
+              {/* Мобильная статистика — компактная */}
+              <div className="flex md:hidden items-center gap-1.5 text-[10px]">
+                <span className="text-green-400 font-medium">{excellent}</span>
+                <span className="text-slate-600">/</span>
+                <span className="text-blue-400 font-medium">{satisfactory}</span>
+                <span className="text-slate-600">/</span>
+                <span className="text-orange-400 font-medium">{needsRepair}</span>
+                <span className="text-slate-600">/</span>
+                <span className="text-red-400 font-medium">{critical}</span>
               </div>
 
               {/* Правая часть */}

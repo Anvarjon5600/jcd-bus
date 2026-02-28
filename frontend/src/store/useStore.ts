@@ -7,6 +7,7 @@ import { BusStop, User, StopStatus, ConditionLevel } from '../types';
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '../api/auth';
 import { getAllStops, deleteStop as apiDeleteStop } from '../api/stops';
 import { isAuthenticated, clearTokens } from '../api/client';
+import { getDistrictsPublic, getCustomFieldsPublic, type CustomFieldDto } from '../api/directories';
 import {
   getUsers as apiGetUsers,
   createUser as apiCreateUser,
@@ -30,6 +31,8 @@ interface AppState {
   stops: BusStop[];
   users: User[];
   usersTotal: number;
+  districts: string[];
+  customFields: CustomFieldDto[];
   filters: Filters;
   currentPage: Page;
   selectedStopId: string | null;
@@ -51,6 +54,8 @@ interface AppState {
   toggleDarkMode: () => void;
 
   loadStops: () => Promise<void>;
+  loadDistricts: () => Promise<void>;
+  loadCustomFields: () => Promise<void>;
   updateStop: (id: string, updates: Partial<BusStop>) => void;
   removeStop: (id: string) => Promise<void>;
   getFilteredStops: () => BusStop[];
@@ -69,6 +74,8 @@ export const useStore = create<AppState>((set, get) => ({
   stops: [],
   users: [],
   usersTotal: 0,
+  districts: [],
+  customFields: [],
   filters: defaultFilters,
   currentPage: 'login',
   selectedStopId: null,
@@ -91,6 +98,8 @@ export const useStore = create<AppState>((set, get) => ({
       };
       set({ currentUser: user, currentPage: 'dashboard', isLoading: false });
       get().loadStops();
+      get().loadDistricts();
+      get().loadCustomFields();
       return true;
     } catch (err: unknown) {
       const e = err as { response?: { data?: { detail?: string } } };
@@ -112,6 +121,8 @@ export const useStore = create<AppState>((set, get) => ({
       const user = await getCurrentUser();
       set({ currentUser: user as unknown as User, currentPage: 'dashboard' });
       get().loadStops();
+      get().loadDistricts();
+      get().loadCustomFields();
     } catch {
       clearTokens();
       set({ currentPage: 'login' });
@@ -125,6 +136,25 @@ export const useStore = create<AppState>((set, get) => ({
       set({ stops, isLoading: false });
     } catch {
       set({ isLoading: false });
+    }
+  },
+
+  loadDistricts: async () => {
+    try {
+      const data = await getDistrictsPublic();
+      const names = data.map(d => d.name);
+      if (names.length > 0) set({ districts: names });
+    } catch {
+      // keep existing districts on error
+    }
+  },
+
+  loadCustomFields: async () => {
+    try {
+      const data = await getCustomFieldsPublic();
+      set({ customFields: data });
+    } catch {
+      // keep existing on error
     }
   },
 

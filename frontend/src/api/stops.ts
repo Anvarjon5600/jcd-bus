@@ -90,6 +90,10 @@ export async function updateStop(id: string, data: Partial<BusStop>): Promise<Bu
   return apiPut<BusStop>(`/stops/${id}`, data);
 }
 
+export async function updateCustomFieldValues(stopId: string, values: { field_id: number; value: string | null }[]): Promise<void> {
+  return apiPut<void>(`/stops/${stopId}/custom-fields`, values);
+}
+
 /**
  * Удаление остановки (только admin)
  */

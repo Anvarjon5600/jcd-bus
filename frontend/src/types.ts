@@ -79,9 +79,17 @@ export interface BusStop {
 
   photos: Photo[];
   change_logs: ChangeLogEntry[];  // FIX: было changeLog
+  custom_field_values?: CustomFieldValue[];
 
   created_at: string;
   updated_at: string;
+}
+
+export interface CustomFieldValue {
+  field_id: number;
+  field_name: string;
+  field_type: string;
+  value: string | null;
 }
 
 export interface User {

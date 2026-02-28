@@ -50,6 +50,7 @@ function createIcon(color: string) {
 
 export function MapView() {
   const { stops, selectStop, darkMode } = useStore();
+  const storeDistricts = useStore(s => s.districts);
   const [search, setSearch] = useState('');
   const [districtFilter, setDistrictFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -202,9 +203,10 @@ export function MapView() {
     });
   }, [filteredStops, mapReady, selectStop]);
 
+  const districtList = storeDistricts.length > 0 ? storeDistricts : DISTRICTS;
   const districtOptions = [
     { value: '', label: 'Все районы' },
-    ...DISTRICTS.map(d => ({ value: d, label: d })),
+    ...districtList.map(d => ({ value: d, label: d })),
   ];
   const statusOptions = [
     { value: '', label: 'Все статусы' },

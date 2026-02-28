@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { DISTRICTS, ConditionLevel, StopStatus } from '../types';
+
 import {
   X, MapPin, Plus, Navigation,
   CheckCircle2, Building2, Wrench, Zap, ChevronRight, ChevronLeft, Crosshair
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { CustomSelect, CONDITION_OPTIONS, STOP_TYPE_OPTIONS, ROOF_TYPE_OPTIONS, LEG_COUNT_OPTIONS, SelectOption } from './CustomSelect';
-import { createStop } from '../api/stops';
+import { createStop, updateCustomFieldValues } from '../api/stops';
 
 declare global {
   interface Window { L: any; }
@@ -97,6 +98,11 @@ async function reverseGeocode(lat: number, lon: number): Promise<{ address: stri
 export function AddStopModal({ onClose }: AddStopModalProps) {
   const selectStop = useStore(s => s.selectStop);
   const dm = useStore(s => s.darkMode);
+  const storeDistricts = useStore(s => s.districts);
+  const districtList = storeDistricts.length > 0 ? storeDistricts : DISTRICTS;
+  const districtOptions: SelectOption[] = districtList.map(d => ({ value: d, label: d }));
+  const customFields = useStore(s => s.customFields);
+  const [cfValues, setCfValues] = useState<Record<number, string>>({});
 
   const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState({ ...INITIAL_FORM });
@@ -279,6 +285,13 @@ export function AddStopModal({ onClose }: AddStopModalProps) {
       };
 
       const created = await createStop(payload);
+      // Save custom field values
+      const cfPayload = Object.entries(cfValues)
+        .filter(([, v]) => v !== '')
+        .map(([fid, val]) => ({ field_id: Number(fid), value: val || null }));
+      if (cfPayload.length > 0) {
+        await updateCustomFieldValues(created.stop_id, cfPayload);
+      }
       // перезагружаем список остановок из backend
       await useStore.getState().loadStops();
       setCreatedId(created.stop_id);
@@ -492,7 +505,7 @@ export function AddStopModal({ onClose }: AddStopModalProps) {
                     </div>
                     <div>
                       <label className={lbl}>Район <span className="text-red-500">*</span></label>
-                      <CustomSelect value={formData.district} onChange={v => set({ district: v })} options={DISTRICT_OPTIONS} />
+                      <CustomSelect value={formData.district} onChange={v => set({ district: v })} options={districtOptions} />
                     </div>
                   </div>
                   <div>
@@ -694,6 +707,49 @@ export function AddStopModal({ onClose }: AddStopModalProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Доп. характеристики */}
+              {customFields.length > 0 && (
+              <div className={cn('rounded-xl border overflow-hidden', dm ? 'border-gray-700/50' : 'border-purple-100')}>
+                <div className={cn('px-4 py-2.5 flex items-center gap-2', dm ? 'bg-purple-500/10' : 'bg-gradient-to-r from-purple-50 to-indigo-50')}>
+                  <span className="text-lg">✨</span>
+                  <h3 className={cn('font-bold text-sm', dm ? 'text-gray-200' : 'text-gray-800')}>Доп. характеристики</h3>
+                </div>
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {customFields.map(cf => {
+                    const val = cfValues[cf.id] ?? '';
+                    if (cf.field_type === 'boolean') {
+                      return (
+                        <div key={cf.id} className="flex items-center gap-3">
+                          <label className={lbl}>{cf.name}</label>
+                          <button type="button" onClick={() => setCfValues(prev => ({ ...prev, [cf.id]: val === 'true' ? 'false' : 'true' }))}
+                            className={cn('w-10 h-5 rounded-full transition-colors relative', val === 'true' ? 'bg-purple-500' : dm ? 'bg-gray-600' : 'bg-gray-300')}>
+                            <span className={cn('absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform', val === 'true' ? 'left-[22px]' : 'left-0.5')} />
+                          </button>
+                        </div>
+                      );
+                    }
+                    if (cf.field_type === 'select' && cf.options) {
+                      return (
+                        <div key={cf.id}>
+                          <label className={lbl}>{cf.name}</label>
+                          <CustomSelect value={val} onChange={v => setCfValues(prev => ({ ...prev, [cf.id]: v }))}
+                            options={cf.options.map(o => ({ value: o, label: o }))} />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={cf.id}>
+                        <label className={lbl}>{cf.name}</label>
+                        <input type={cf.field_type === 'number' ? 'number' : 'text'} value={val}
+                          onChange={e => setCfValues(prev => ({ ...prev, [cf.id]: e.target.value }))}
+                          className={inp} placeholder={cf.name} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              )}
             </>)}
           </div>
 

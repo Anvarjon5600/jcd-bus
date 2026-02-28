@@ -17,8 +17,13 @@ import {
   createRoute,
   updateRoute,
   deleteRoute,
+  getCustomFieldsDirectory,
+  createCustomField,
+  updateCustomField,
+  deleteCustomField,
   type DistrictDto,
   type RouteDto,
+  type CustomFieldDto,
 } from '../api/directories';
 
 type Tab = 'users' | 'directories' | 'permissions' | 'data';
@@ -123,7 +128,7 @@ function ImportStopsBlock() {
 }
 
 export function AdminPanel() {
-  const { users, addUser, updateUser, deleteUser, currentUser, darkMode, loadUsers } = useStore();
+  const { users, addUser, updateUser, deleteUser, currentUser, darkMode, loadUsers, loadDistricts, loadCustomFields } = useStore();
   const dm = darkMode;
 
   const [activeTab, setActiveTab] = useState<Tab>('users');
@@ -138,6 +143,8 @@ export function AdminPanel() {
   const [routes, setRoutes] = useState<RouteDto[]>([]);
   const [newDistrict, setNewDistrict] = useState<{ name: string; is_active: boolean }>({ name: '', is_active: true });
   const [newRoute, setNewRoute] = useState<{ number: string; name: string; is_active: boolean }>({ number: '', name: '', is_active: true });
+  const [customFields, setCustomFields] = useState<CustomFieldDto[]>([]);
+  const [newField, setNewField] = useState<{ name: string; field_type: string; options: string; is_required: boolean }>({ name: '', field_type: 'text', options: '', is_required: false });
   const tabs: Array<{ id: Tab; label: string; icon: React.ElementType }> = [
     { id: 'users', label: 'Пользователи', icon: Users },
     { id: 'directories', label: 'Справочники', icon: Settings },
@@ -159,12 +166,14 @@ export function AdminPanel() {
       setDirectoriesLoading(true);
       setDirError(null);
       try {
-        const [d, r] = await Promise.all([
+        const [d, r, cf] = await Promise.all([
           getDistrictsDirectory(),
           getRoutesDirectory(),
+          getCustomFieldsDirectory(),
         ]);
         setDistricts(d);
         setRoutes(r);
+        setCustomFields(cf);
       } catch (e) {
         console.error(e);
         setDirError('Не удалось загрузить справочники');
@@ -493,6 +502,7 @@ export function AdminPanel() {
                           const created = await createDistrict({ name: newDistrict.name.trim(), is_active: newDistrict.is_active });
                           setDistricts(prev => [...prev, created]);
                           setNewDistrict({ name: '', is_active: true });
+                          loadDistricts();
                         } catch (e) {
                           console.error(e);
                           setDirError('Не удалось создать район');
@@ -571,6 +581,7 @@ export function AdminPanel() {
                           try {
                             await deleteDistrict(d.id);
                             setDistricts(prev => prev.filter(x => x.id !== d.id));
+                            loadDistricts();
                           } catch (err) {
                             console.error(err);
                             setDirError('Не удалось удалить район');
@@ -750,6 +761,129 @@ export function AdminPanel() {
                     <p className={cn('text-xs text-center py-4', sub)}>Пока нет ни одного маршрута</p>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* ── Характеристики ── */}
+            <div className={cn('rounded-2xl border p-5', dm ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white border-gray-100')}>
+              <h3 className={cn('text-base font-bold mb-4 flex items-center gap-2', dm ? 'text-white' : 'text-gray-900')}>
+                <Settings className="w-5 h-5 text-purple-500" />
+                Характеристики
+                <span className={cn('ml-auto text-xs px-2 py-0.5 rounded-full', dm ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-700')}>
+                  {customFields.length}
+                </span>
+              </h3>
+              {/* Форма добавления */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <input
+                  type="text"
+                  value={newField.name}
+                  onChange={e => setNewField(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Название характеристики"
+                  className={cn('flex-1 min-w-[160px] px-3 py-2 rounded-xl border text-sm', dm ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-500' : 'bg-gray-50 border-gray-200 text-gray-900')}
+                />
+                <select
+                  value={newField.field_type}
+                  onChange={e => setNewField(prev => ({ ...prev, field_type: e.target.value }))}
+                  className={cn('px-3 py-2 rounded-xl border text-sm', dm ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900')}
+                >
+                  <option value="text">Текст</option>
+                  <option value="number">Число</option>
+                  <option value="boolean">Да/Нет</option>
+                  <option value="select">Выбор</option>
+                </select>
+                {newField.field_type === 'select' && (
+                  <input
+                    type="text"
+                    value={newField.options}
+                    onChange={e => setNewField(prev => ({ ...prev, options: e.target.value }))}
+                    placeholder="Варианты через запятую"
+                    className={cn('flex-1 min-w-[160px] px-3 py-2 rounded-xl border text-sm', dm ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-500' : 'bg-gray-50 border-gray-200 text-gray-900')}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!newField.name.trim()) return;
+                    try {
+                      const opts = newField.field_type === 'select' && newField.options
+                        ? newField.options.split(',').map(s => s.trim()).filter(Boolean)
+                        : undefined;
+                      const created = await createCustomField({
+                        name: newField.name.trim(),
+                        field_type: newField.field_type,
+                        options: opts,
+                        is_required: newField.is_required,
+                      });
+                      setCustomFields(prev => [...prev, created]);
+                      setNewField({ name: '', field_type: 'text', options: '', is_required: false });
+                      loadCustomFields();
+                    } catch (e) {
+                      console.error(e);
+                      setDirError('Не удалось создать характеристику');
+                    }
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:from-purple-600 hover:to-indigo-700 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              {/* Список */}
+              <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                {customFields.map(cf => (
+                  <div key={cf.id} className={cn('flex items-center gap-2 px-3 py-2 rounded-xl', dm ? 'bg-gray-700/50' : 'bg-gray-50')}>
+                    <span className={cn('flex-1 text-sm font-medium', dm ? 'text-gray-200' : 'text-gray-800')}>{cf.name}</span>
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full', dm ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600')}>
+                      {cf.field_type === 'text' ? 'Текст' : cf.field_type === 'number' ? 'Число' : cf.field_type === 'boolean' ? 'Да/Нет' : 'Выбор'}
+                    </span>
+                    {cf.options && cf.options.length > 0 && (
+                      <span className={cn('text-xs', dm ? 'text-gray-400' : 'text-gray-500')}>
+                        ({cf.options.join(', ')})
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const updated = await updateCustomField(cf.id, { is_active: !cf.is_active });
+                          setCustomFields(prev => prev.map(x => x.id === cf.id ? updated : x));
+                          loadCustomFields();
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}
+                      className={cn(
+                        'w-9 h-5 rounded-full transition-colors relative',
+                        cf.is_active ? 'bg-purple-500' : (dm ? 'bg-gray-600' : 'bg-gray-300')
+                      )}
+                    >
+                      <span className={cn(
+                        'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
+                        cf.is_active ? 'left-[18px]' : 'left-0.5'
+                      )} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!confirm('Удалить характеристику? Значения у всех остановок будут удалены.')) return;
+                        try {
+                          await deleteCustomField(cf.id);
+                          setCustomFields(prev => prev.filter(x => x.id !== cf.id));
+                          loadCustomFields();
+                        } catch (err) {
+                          console.error(err);
+                          setDirError('Не удалось удалить характеристику');
+                        }
+                      }}
+                      className={cn('p-1.5 rounded-lg', dm ? 'text-gray-500 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-400 hover:text-red-600 hover:bg-red-50')}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                {customFields.length === 0 && !directoriesLoading && (
+                  <p className={cn('text-xs text-center py-4', sub)}>Пока нет характеристик. Добавьте первую!</p>
+                )}
               </div>
             </div>
           </div>
