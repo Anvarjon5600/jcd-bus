@@ -11,7 +11,7 @@ import io
 import base64
 
 from database import get_db
-from models import BusStop, ChangeLog, User
+from models import BusStop, ChangeLog, User, CustomFieldValue
 from schemas import (
     BusStopCreate, BusStopUpdate, BusStopResponse,
     BusStopListResponse, StatsResponse, ChangeLogResponse
@@ -148,8 +148,11 @@ async def get_all_stops(
     FIX: Добавлен endpoint /stops/all — используется фронтендом для карты.
     Возвращает все остановки без пагинации.
     """
-    stops = db.query(BusStop).options(joinedload(BusStop.photos)).all()
-    return stops
+    stops = db.query(BusStop).options(
+        joinedload(BusStop.photos),
+        joinedload(BusStop.custom_field_values).joinedload(CustomFieldValue.field),
+    ).all()
+    return [BusStopResponse.from_stop(s) for s in stops]
 
 
 @router.get("/stats", response_model=StatsResponse)
@@ -208,7 +211,8 @@ async def get_stop(
 ):
     stop = db.query(BusStop).options(
         joinedload(BusStop.photos),
-        joinedload(BusStop.change_logs)
+        joinedload(BusStop.change_logs),
+        joinedload(BusStop.custom_field_values).joinedload(CustomFieldValue.field),
     ).filter(
         or_(
             BusStop.stop_id == stop_id,
@@ -219,7 +223,7 @@ async def get_stop(
     if not stop:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Остановка не найдена")
 
-    return stop
+    return BusStopResponse.from_stop(stop)
 
 
 @router.get("/{stop_id}/history", response_model=List[ChangeLogResponse])
@@ -364,6 +368,42 @@ async def delete_stop(
     )
 
     return {"message": "Остановка удалена"}
+
+
+@router.put("/{stop_id}/custom-fields")
+async def update_custom_field_values(
+    stop_id: str,
+    request: Request,
+    values: List[dict],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_inspector),
+):
+    """Сохраняет значения пользовательских характеристик для остановки.
+    values: [{"field_id": 1, "value": "..."}, ...]
+    """
+    stop = db.query(BusStop).filter(
+        or_(
+            BusStop.stop_id == stop_id,
+            BusStop.id == int(stop_id) if stop_id.isdigit() else False
+        )
+    ).first()
+    if not stop:
+        raise HTTPException(status_code=404, detail="Остановка не найдена")
+
+    for item in values:
+        field_id = item.get("field_id")
+        val = item.get("value")
+        existing = db.query(CustomFieldValue).filter(
+            CustomFieldValue.bus_stop_id == stop.id,
+            CustomFieldValue.field_id == field_id,
+        ).first()
+        if existing:
+            existing.value = val
+        else:
+            db.add(CustomFieldValue(bus_stop_id=stop.id, field_id=field_id, value=val))
+
+    db.commit()
+    return {"message": "OK"}
 
 
 @router.post("/{stop_id}/inspection")

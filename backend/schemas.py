@@ -231,6 +231,13 @@ class ChangeLogResponse(BaseModel):
         from_attributes = True
 
 
+class CustomFieldValueResponse(BaseModel):
+    field_id: int
+    field_name: str
+    field_type: str
+    value: Optional[str] = None
+
+
 class BusStopResponse(BaseModel):
     id: int
     stop_id: str
@@ -280,9 +287,28 @@ class BusStopResponse(BaseModel):
 
     photos: List[PhotoResponse] = []
     change_logs: List[ChangeLogResponse] = []
+    custom_field_values: List[CustomFieldValueResponse] = []
 
     class Config:
         from_attributes = True
+
+    @classmethod
+    def from_stop(cls, stop):
+        """Build response with custom field values properly mapped"""
+        data = {c.name: getattr(stop, c.name) for c in stop.__table__.columns}
+        data["photos"] = stop.photos
+        data["change_logs"] = stop.change_logs
+        data["custom_field_values"] = [
+            CustomFieldValueResponse(
+                field_id=cfv.field_id,
+                field_name=cfv.field.name,
+                field_type=cfv.field.field_type,
+                value=cfv.value,
+            )
+            for cfv in (stop.custom_field_values or [])
+            if cfv.field and cfv.field.is_active
+        ]
+        return cls.model_validate(data)
 
 
 class BusStopListResponse(BaseModel):

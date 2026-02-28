@@ -168,6 +168,9 @@ class BusStop(Base):
     change_logs = relationship(
         "ChangeLog", back_populates="bus_stop", cascade="all, delete-orphan"
     )
+    custom_field_values = relationship(
+        "CustomFieldValue", back_populates="bus_stop", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("idx_bus_stops_location", "latitude", "longitude"),
@@ -270,3 +273,39 @@ class Route(Base):
     name = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
+
+
+# ============== ПОЛЬЗОВАТЕЛЬСКИЕ ХАРАКТЕРИСТИКИ ==============
+
+
+class CustomField(Base):
+    """Определение пользовательской характеристики (создаётся админом)"""
+    __tablename__ = "custom_fields"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    field_type = Column(String(20), nullable=False, default="text")  # text, number, boolean, select
+    options = Column(JSON, nullable=True)  # для select: ["Да", "Нет", "Частично"]
+    is_required = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=func.now())
+
+    values = relationship("CustomFieldValue", back_populates="field", cascade="all, delete-orphan")
+
+
+class CustomFieldValue(Base):
+    """Значение пользовательской характеристики для конкретной остановки"""
+    __tablename__ = "custom_field_values"
+
+    id = Column(Integer, primary_key=True, index=True)
+    bus_stop_id = Column(Integer, ForeignKey("bus_stops.id", ondelete="CASCADE"), nullable=False)
+    field_id = Column(Integer, ForeignKey("custom_fields.id", ondelete="CASCADE"), nullable=False)
+    value = Column(Text, nullable=True)
+
+    field = relationship("CustomField", back_populates="values")
+    bus_stop = relationship("BusStop", back_populates="custom_field_values")
+
+    __table_args__ = (
+        Index("idx_cfv_stop_field", "bus_stop_id", "field_id", unique=True),
+    )
